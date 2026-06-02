@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>CXeller8 — Supervisor</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#090704;--s1:#16120e;--s2:#1e1812;--bd:#2e2218;
+      --tx:#ede9e1;--mt:#6b6560;
+      --ac:#f97316;--acb:rgba(249,115,22,.12);--acbr:rgba(249,115,22,.25);
+      --gn:#2d9e6b;--gnb:rgba(45,158,107,.12);
+      --yw:#d4a017;--ywb:rgba(212,160,23,.12);
+      --rd:#e05555;--rdb:rgba(224,85,85,.1);
+      --bl:#4a8fc4;--blb:rgba(74,143,196,.1)
+    }
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+    /* ── Header ── */
+    header{background:linear-gradient(135deg,#0c0a07 60%,#2a0e00);border-bottom:1px solid var(--bd);padding:0 1.5rem;height:50px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .logo{font-family:'DM Serif Display',serif;font-size:1.1rem}
+    .logo span{color:var(--ac)}
+    .badge-sup{background:var(--acb);color:var(--ac);border:1px solid var(--acbr);border-radius:100px;padding:.2rem .7rem;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+
+    /* ── Nav ── */
+    nav{display:flex;background:var(--s1);border-bottom:1px solid var(--bd);padding:0 1.5rem;flex-shrink:0}
+    .tab{padding:.6rem .85rem;font-size:.7rem;font-weight:500;color:var(--mt);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+    .tab.on{color:var(--tx);border-bottom-color:var(--ac)}
+    .tab .n{display:inline-block;background:var(--ac);color:#fff;font-size:.56rem;padding:.08rem .35rem;border-radius:100px;margin-left:.3rem;vertical-align:middle}
+
+    /* ── Pages ── */
+    .pg{display:none;flex:1;overflow-y:auto}
+    .pg.on{display:block}
+    .pg::-webkit-scrollbar{width:4px}
+    .pg::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
+    .wrap{padding:1.25rem 1.5rem}
+
+    /* ── KPI row ── */
+    .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:.75rem;margin-bottom:1.5rem}
+    .kpi{background:var(--s1);border:1px solid var(--bd);border-radius:4px;padding:.9rem 1rem}
+    .kv{font-family:'DM Serif Display',serif;font-size:1.6rem;line-height:1;margin-bottom:.15rem}
+    .kv.ac{color:var(--ac)}.kv.gn{color:var(--gn)}.kv.yw{color:var(--yw)}
+    .kl{font-size:.6rem;color:var(--mt);text-transform:uppercase;letter-spacing:.08em}
+
+    /* ── Cards ── */
+    .g2{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;margin-bottom:.85rem}
+    .card{background:var(--s1);border:1px solid var(--bd);border-radius:4px;overflow:hidden;margin-bottom:.85rem}
+    .card:last-child{margin-bottom:0}
+    .ch{padding:.75rem 1rem;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+    .ct{font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--mt)}
+    .cb{background:var(--ac);color:#fff;font-size:.56rem;padding:.1rem .38rem;border-radius:100px}
+    .gnb{background:var(--gnb);color:var(--gn);font-size:.6rem;padding:.1rem .45rem;border-radius:100px}
+    .empty{text-align:center;padding:1.5rem;color:var(--mt);font-size:.75rem}
+
+    /* ── Live items ── */
+    .lci{padding:.65rem 1rem;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:.6rem}
+    .lci:last-child{border-bottom:none}
+    .ldot{width:6px;height:6px;background:var(--ac);border-radius:50%;flex-shrink:0;animation:pulse 1.2s ease infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+    .lnm{font-size:.8rem;font-weight:500;flex:1}
+    .lsub{font-size:.63rem;color:var(--mt)}
+    .qi{padding:.65rem 1rem;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:.6rem}
+    .qi:last-child{border-bottom:none}
+    .qp{width:20px;height:20px;background:var(--bd);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:600;color:var(--mt);flex-shrink:0}
+
+    /* ── Table ── */
+    table{width:100%;border-collapse:collapse}
+    th{font-size:.6rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mt);padding:.5rem .85rem;text-align:left;border-bottom:1px solid var(--bd)}
+    td{padding:.6rem .85rem;font-size:.78rem;border-bottom:1px solid var(--bd);vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:var(--s2)}
+    .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:.35rem;vertical-align:middle}
+    .dot.available{background:var(--gn)}.dot.busy{background:var(--yw)}.dot.offline{background:var(--mt)}
+
+    /* ── Buttons ── */
+    .btn-del{padding:.22rem .55rem;background:var(--rdb);color:var(--rd);border:1px solid rgba(224,85,85,.25);border-radius:100px;font-size:.63rem;cursor:pointer;font-family:'DM Sans',sans-serif}
+    .btn-add{padding:.35rem .8rem;background:var(--acb);color:var(--ac);border:1px solid var(--acbr);border-radius:100px;font-size:.7rem;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500}
+    .btn-acc{padding:.4rem .85rem;background:var(--yw);color:#111;border:none;border-radius:3px;font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer}
+    .btn-ref{padding:.35rem .8rem;background:var(--acb);color:var(--ac);border:1px solid var(--acbr);border-radius:100px;font-size:.7rem;cursor:pointer;font-family:'DM Sans',sans-serif}
+
+    /* ── Escalation ── */
+    .esci{background:var(--s2);border:1px solid rgba(212,160,23,.35);border-radius:3px;padding:.85rem 1rem;margin-bottom:.6rem}
+    .escb{font-size:.6rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--yw);margin-bottom:.4rem;display:flex;align-items:center;gap:.3rem}
+    .escd{width:6px;height:6px;background:var(--yw);border-radius:50%;animation:pulse .8s ease infinite}
+    .escn{font-size:.88rem;font-weight:500;margin-bottom:.15rem}
+    .escs{font-size:.7rem;color:var(--mt);margin-bottom:.6rem}
+
+    /* ── Sup call banner ── */
+    #sup-call{display:none;background:var(--s2);border:1px solid var(--acbr);border-radius:4px;padding:1rem 1.15rem;margin-bottom:1rem}
+
+    /* ── Modal ── */
+    #modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;align-items:center;justify-content:center;padding:2rem}
+    #modal.on{display:flex}
+    .mc{background:var(--s1);border:1px solid var(--bd);border-radius:4px;padding:1.75rem;width:100%;max-width:360px}
+    .mt{font-family:'DM Serif Display',serif;font-size:1.3rem;margin-bottom:1.1rem}
+    label{display:block;font-size:.65rem;font-weight:500;letter-spacing:.09em;text-transform:uppercase;color:var(--mt);margin-bottom:.35rem}
+    input[type=text],input[type=email],input[type=password]{width:100%;padding:.68rem .9rem;background:var(--bg);border:1px solid var(--bd);border-radius:3px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:.85rem;outline:none;margin-bottom:.9rem}
+    input:focus{border-color:var(--ac)}
+    input::placeholder{color:var(--mt)}
+    .btn-save{width:100%;padding:.72rem;background:var(--ac);color:#fff;border:none;border-radius:3px;font-family:'DM Sans',sans-serif;font-size:.875rem;font-weight:500;cursor:pointer}
+    .btn-cancel{width:100%;padding:.6rem;background:transparent;border:1px solid var(--bd);border-radius:3px;font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--mt);cursor:pointer;margin-top:.45rem}
+    .merr{background:var(--rdb);border:1px solid rgba(224,85,85,.3);border-radius:3px;padding:.4rem .75rem;font-size:.73rem;color:var(--rd);margin-bottom:.7rem;display:none}
+    .merr.on{display:block}
+
+    /* ── KB ── */
+    .kbi{display:flex;align-items:center;justify-content:space-between;padding:.65rem 1rem;border-bottom:1px solid var(--bd)}
+    .kbi:last-child{border-bottom:none}
+    .kbt{background:var(--acb);color:var(--ac);font-size:.58rem;font-weight:700;padding:.12rem .38rem;border-radius:3px;flex-shrink:0;margin-right:.65rem}
+
+    /* ── Recordings ── */
+    .reci{display:flex;align-items:center;justify-content:space-between;padding:.65rem 1rem;border-bottom:1px solid var(--bd)}
+    .reci:last-child{border-bottom:none}
+
+    /* ── Toast ── */
+    #toast{position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%);background:var(--s2);border:1px solid var(--bd);border-radius:4px;padding:.5rem 1rem;font-size:.75rem;color:var(--tx);opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap}
+    #toast.on{opacity:1}
+
+    /* ── KB upload spinner ── */
+    @keyframes spin{to{transform:rotate(360deg)}}
+    #kb-progress{display:none;background:var(--s2);border:1px solid var(--bd);border-radius:4px;padding:.9rem 1.1rem;margin-bottom:.85rem;font-size:.78rem;display:flex;align-items:center;gap:.65rem}
+    #kb-progress.on{display:flex}
+    .spinner{width:16px;height:16px;border:2px solid var(--ac);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+
+    audio{display:none}
+  </style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex;align-items:center;gap:1rem">
+    <div class="logo">CXeller<span>8</span></div>
+    <div class="badge-sup">Supervisor</div>
+  </div>
+  <div style="font-size:.72rem;color:var(--mt)">Call Center Management</div>
+</header>
+
+<nav>
+  <div class="tab on"  onclick="go('live')">Live</div>
+  <div class="tab"     onclick="go('esc')">⚡ Escalations<span class="n" id="esc-n" style="display:none">0</span></div>
+  <div class="tab"     onclick="go('agents')">Agents</div>
+  <div class="tab"     onclick="go('kb')">Knowledge Base</div>
+  <div class="tab"     onclick="go('recs')">Recordings</div>
+</nav>
+
+<!-- ── LIVE ─────────────────────────────────────────────────────────────── -->
+<div class="pg on" id="pg-live">
+  <div class="wrap">
+    <div class="kpis">
+      <div class="kpi"><div class="kv gn" id="k-calls">0</div><div class="kl">Calls Today</div></div>
+      <div class="kpi"><div class="kv"     id="k-avg">—</div><div class="kl">Avg Duration</div></div>
+      <div class="kpi"><div class="kv yw"  id="k-queue">0</div><div class="kl">In Queue</div></div>
+      <div class="kpi"><div class="kv ac"  id="k-agents">0</div><div class="kl">Online Agents</div></div>
+      <div class="kpi"><div class="kv"     id="k-rating">—</div><div class="kl">Avg Rating</div></div>
+    </div>
+
+    <div id="sup-call">
+      <div style="display:flex;align-items:center;gap:.4rem;font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--ac);margin-bottom:.5rem">
+        <span style="width:6px;height:6px;background:var(--ac);border-radius:50%;animation:pulse 1s ease infinite;display:inline-block"></span>
+        Live Escalation Call
+      </div>
+      <div style="font-family:'DM Serif Display',serif;font-size:1.1rem;margin-bottom:.75rem" id="sup-call-nm">Customer</div>
+      <button onclick="endSupCall()" style="padding:.45rem .9rem;background:var(--rdb);color:var(--rd);border:1px solid rgba(224,85,85,.25);border-radius:3px;font-family:'DM Sans',sans-serif;font-size:.75rem;cursor:pointer">End Call</button>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <div class="ch"><div class="ct">Live Calls</div><span class="cb" id="lc-n">0</span></div>
+        <div id="live-list"><div class="empty">No active calls</div></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ct">Queue</div><span class="cb" id="q-n">0</span></div>
+        <div id="q-list"><div class="empty">Queue is empty</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><div class="ct">Agent Status</div><span class="gnb" id="ag-online">0 online</span></div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Agent</th><th>Status</th><th>On Call With</th></tr></thead>
+          <tbody id="ag-tbody"><tr><td colspan="3" class="empty">No agents online</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ESCALATIONS ───────────────────────────────────────────────────────── -->
+<div class="pg" id="pg-esc">
+  <div class="wrap">
+    <div style="font-family:'DM Serif Display',serif;font-size:1.3rem;margin-bottom:1.1rem">Escalations</div>
+    <div id="esc-list"><div class="empty">No pending escalations</div></div>
+  </div>
+</div>
+
+<!-- ── AGENTS ────────────────────────────────────────────────────────────── -->
+<div class="pg" id="pg-agents">
+  <div class="wrap">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem">
+      <div style="font-family:'DM Serif Display',serif;font-size:1.3rem">Agent Management</div>
+      <button class="btn-add" onclick="openModal()">+ Add Agent</button>
+    </div>
+    <div class="card">
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Auto-Record</th><th>Actions</th></tr></thead>
+          <tbody id="ag-mgmt-tbody"><tr><td colspan="5" class="empty">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── KNOWLEDGE BASE ────────────────────────────────────────────────────── -->
+<div class="pg" id="pg-kb">
+  <div class="wrap">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem">
+      <div>
+        <div style="font-family:'DM Serif Display',serif;font-size:1.3rem">Knowledge Base</div>
+        <div style="font-size:.72rem;color:var(--mt);margin-top:.2rem">Documents that power Nikki's answers</div>
+      </div>
+      <label for="kb-file" class="btn-add" style="cursor:pointer">↑ Upload</label>
+      <input type="file" id="kb-file" style="display:none" accept=".pdf,.docx,.doc,.txt" onchange="uploadKB(this)"/>
+    </div>
+    <div id="kb-progress"><div class="spinner"></div><span id="kb-prog-txt">Uploading...</span></div>
+    <div class="card">
+      <div class="ch"><div class="ct">Ingested Documents</div><span class="cb" id="kb-n">0</span></div>
+      <div id="kb-list"><div class="empty">No documents yet. Upload a PDF, DOCX, or TXT.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── RECORDINGS ────────────────────────────────────────────────────────── -->
+<div class="pg" id="pg-recs">
+  <div class="wrap">
+    <div style="font-family:'DM Serif Display',serif;font-size:1.3rem;margin-bottom:1.1rem">Call Recordings</div>
+    <div class="card">
+      <div class="ch"><div class="ct">All Recordings</div><span class="cb" id="rec-n">0</span></div>
+      <div id="rec-list"><div class="empty">No recordings yet</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL ─────────────────────────────────────────────────────────────── -->
+<div id="modal">
+  <div class="mc">
+    <div class="mt">Add New Agent</div>
+    <div class="merr" id="merr"></div>
+    <label>Full Name</label>
+    <input type="text" id="m-name" placeholder="Jane Smith"/>
+    <label>Email</label>
+    <input type="email" id="m-email" placeholder="jane@company.com"/>
+    <label>Password</label>
+    <input type="password" id="m-pass" placeholder="Min 6 characters"/>
+    <button class="btn-save" onclick="addAgent()">Create Agent</button>
+    <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+<audio id="sup-audio" autoplay playsinline></audio>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+var liveAgents = [];
+var liveQueue = [];
+var liveCalls = [];
+var pendingEsc = [];
+var supPc = null, supStream = null;
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  setTimeout(function(){ t.classList.remove('on'); }, 2500);
+}
+
+function fmtDur(s) {
+  if (!s) return '0:00';
+  return Math.floor(s/60) + ':' + (s%60 < 10 ? '0' : '') + (s%60);
+}
+
+function el(id) { return document.getElementById(id); }
+
+function go(name) {
+  var pages = ['live','esc','agents','kb','recs'];
+  var tabs = document.querySelectorAll('.tab');
+  pages.forEach(function(p, i) {
+    el('pg-'+p).classList.toggle('on', p === name);
+    tabs[i].classList.toggle('on', p === name);
+  });
+  if (name === 'agents') loadAgents();
+  if (name === 'kb') loadKB();
+  if (name === 'recs') loadRecs();
+}
+
+// ── API helper (no auth required) ─────────────────────────────────────────────
+function api(path, opts) {
+  var options = opts || {};
+  var headers = { 'Content-Type': 'application/json' };
+  if (options.headers) {
+    Object.keys(options.headers).forEach(function(k){ headers[k] = options.headers[k]; });
+  }
+  options.headers = headers;
+  return fetch(path, options).then(function(r){ return r.json(); });
+}
+
+// ── KPIs ──────────────────────────────────────────────────────────────────────
+function loadKPIs() {
+  api('/api/supervisor/overview').then(function(d) {
+    if (!d || !d.today) return;
+    el('k-calls').textContent = d.today.total_calls || 0;
+    el('k-avg').textContent = fmtDur(Math.round(d.today.avg_duration || 0));
+    el('k-rating').textContent = d.today.avg_rating > 0 ? Number(d.today.avg_rating).toFixed(1) : '—';
+  }).catch(function(){});
+}
+
+// ── Live state ────────────────────────────────────────────────────────────────
+function renderLive() {
+  var online = liveAgents.filter(function(a){ return a.status !== 'offline'; });
+  el('k-queue').textContent = liveQueue.length;
+  el('k-agents').textContent = online.length;
+  el('ag-online').textContent = online.length + ' online';
+
+  // Live calls
+  el('lc-n').textContent = liveCalls.length;
+  if (!liveCalls.length) {
+    el('live-list').innerHTML = '<div class="empty">No active calls</div>';
+  } else {
+    el('live-list').innerHTML = liveCalls.map(function(c) {
+      var agName = '';
+      liveAgents.forEach(function(a){ if (a.socketId === c.agentId) agName = a.name; });
+      var dur = Math.round((Date.now() - c.startTime) / 1000);
+      return '<div class="lci"><span class="ldot"></span>' +
+        '<div style="flex:1"><div class="lnm">' + (c.customerName||'Customer') + '</div>' +
+        '<div class="lsub">' + (agName||'Agent') + ' · ' + fmtDur(dur) + (c.onHold ? ' · On Hold' : '') + '</div></div></div>';
+    }).join('');
+  }
+
+  // Queue
+  el('q-n').textContent = liveQueue.length;
+  if (!liveQueue.length) {
+    el('q-list').innerHTML = '<div class="empty">Queue is empty</div>';
+  } else {
+    el('q-list').innerHTML = liveQueue.map(function(c, i) {
+      var w = Math.round((Date.now() - c.waitingSince) / 1000);
+      return '<div class="qi"><div class="qp">' + (i+1) + '</div>' +
+        '<div style="flex:1"><div style="font-size:.8rem;font-weight:500">' + (c.name||'Customer') + '</div>' +
+        '<div style="font-size:.62rem;color:var(--mt)">Waiting ' + w + 's</div></div></div>';
+    }).join('');
+  }
+
+  // Agent table
+  if (!online.length) {
+    el('ag-tbody').innerHTML = '<tr><td colspan="3" class="empty">No agents online</td></tr>';
+  } else {
+    el('ag-tbody').innerHTML = online.map(function(a) {
+      var call = null;
+      liveCalls.forEach(function(c){ if (c.agentId === a.socketId) call = c; });
+      return '<tr><td>' + a.name + '</td>' +
+        '<td><span class="dot ' + a.status + '"></span>' + a.status + '</td>' +
+        '<td style="font-size:.7rem;color:var(--mt)">' + (call ? call.customerName||'Customer' : '—') + '</td></tr>';
+    }).join('');
+  }
+}
+
+// ── Escalations ───────────────────────────────────────────────────────────────
+function renderEsc() {
+  var n = pendingEsc.length;
+  el('esc-n').style.display = n ? 'inline-block' : 'none';
+  el('esc-n').textContent = n;
+  if (!pendingEsc.length) {
+    el('esc-list').innerHTML = '<div class="empty">No pending escalations</div>';
+    return;
+  }
+  el('esc-list').innerHTML = pendingEsc.map(function(e) {
+    return '<div class="esci">' +
+      '<div class="escb"><span class="escd"></span>From ' + e.agentName + '</div>' +
+      '<div class="escn">' + e.customerName + '</div>' +
+      '<div class="escs">' + (e.reason||'No reason given') + '</div>' +
+      '<button class="btn-acc" onclick="acceptEsc(\'' + e.escalationId + '\',\'' + e.callId + '\',\'' + e.customerId + '\',\'' + e.customerName + '\')">Accept Call</button>' +
+      '</div>';
+  }).join('');
+}
+
+function acceptEsc(escId, callId, custId, custNm) {
+  socket.emit('supervisor-accept-escalation', { escalationId: escId, callId: callId });
+  pendingEsc = pendingEsc.filter(function(e){ return e.escalationId !== escId; });
+  renderEsc();
+}
+
+// ── Agents ────────────────────────────────────────────────────────────────────
+function loadAgents() {
+  el('ag-mgmt-tbody').innerHTML = '<tr><td colspan="5" class="empty">Loading...</td></tr>';
+  api('/api/supervisor/agents').then(function(agents) {
+    if (!agents || !agents.length) {
+      el('ag-mgmt-tbody').innerHTML = '<tr><td colspan="5" class="empty">No agents yet</td></tr>';
+      return;
+    }
+    var liveMap = {};
+    liveAgents.forEach(function(a){ liveMap[a.id] = a; });
+    el('ag-mgmt-tbody').innerHTML = agents.map(function(a) {
+      var live = liveMap[a.id];
+      var status = live ? live.status : 'offline';
+      var ar = a.auto_record === 1 || a.auto_record === '1';
+      return '<tr>' +
+        '<td>' + a.name + '</td>' +
+        '<td style="color:var(--mt);font-size:.72rem">' + a.email + '</td>' +
+        '<td><span class="dot ' + status + '"></span>' + status + '</td>' +
+        '<td><label style="display:flex;align-items:center;gap:.35rem;cursor:pointer">' +
+        '<input type="checkbox"' + (ar?' checked':'') + ' onchange="setAutoRec(\'' + a.id + '\',this.checked)" style="accent-color:var(--ac);cursor:pointer"/>' +
+        '<span style="font-size:.68rem;color:' + (ar?'var(--ac)':'var(--mt)') + '">' + (ar?'On':'Off') + '</span></label></td>' +
+        '<td><button class="btn-del" onclick="delAgent(\'' + a.id + '\',\'' + a.name + '\')">Remove</button></td>' +
+        '</tr>';
+    }).join('');
+  }).catch(function(e){ el('ag-mgmt-tbody').innerHTML = '<tr><td colspan="5" class="empty">Error loading agents</td></tr>'; });
+}
+
+function openModal() { el('modal').classList.add('on'); el('merr').classList.remove('on'); }
+function closeModal() {
+  el('modal').classList.remove('on');
+  ['m-name','m-email','m-pass'].forEach(function(id){ el(id).value = ''; });
+}
+
+function addAgent() {
+  var name = el('m-name').value.trim();
+  var email = el('m-email').value.trim();
+  var pass = el('m-pass').value;
+  var err = el('merr');
+  err.classList.remove('on');
+  if (!name || !email || !pass) { err.textContent = 'All fields required'; err.classList.add('on'); return; }
+  if (pass.length < 6) { err.textContent = 'Password must be 6+ characters'; err.classList.add('on'); return; }
+  api('/api/supervisor/agents', {
+    method: 'POST',
+    body: JSON.stringify({ name: name, email: email, password: pass })
+  }).then(function(r) {
+    if (r.error) { err.textContent = r.error; err.classList.add('on'); return; }
+    toast(name + ' added successfully');
+    closeModal();
+    loadAgents();
+  }).catch(function(){ err.textContent = 'Server error'; err.classList.add('on'); });
+}
+
+function delAgent(id, name) {
+  if (!confirm('Remove ' + name + '? They will no longer be able to log in.')) return;
+  api('/api/supervisor/agents/' + id, { method: 'DELETE' }).then(function() {
+    toast(name + ' removed'); loadAgents();
+  }).catch(function(){ toast('Error removing agent'); });
+}
+
+function setAutoRec(id, enabled) {
+  api('/api/supervisor/agents/' + id + '/autorecord', {
+    method: 'PUT',
+    body: JSON.stringify({ enabled: enabled })
+  }).then(function(){ toast('Auto-record ' + (enabled ? 'enabled' : 'disabled')); })
+  .catch(function(){ toast('Failed to update'); });
+}
+
+// ── Knowledge Base ─────────────────────────────────────────────────────────────
+function loadKB() {
+  api('/api/kb/documents').then(function(docs) {
+    el('kb-n').textContent = docs ? docs.length : 0;
+    if (!docs || !docs.length) {
+      el('kb-list').innerHTML = '<div class="empty">No documents yet. Upload a PDF, DOCX, or TXT.</div>';
+      return;
+    }
+    el('kb-list').innerHTML = docs.map(function(d) {
+      var t = new Date(d.uploaded_at).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      return '<div class="kbi">' +
+        '<div style="display:flex;align-items:center;flex:1">' +
+        '<span class="kbt">' + d.file_type.toUpperCase() + '</span>' +
+        '<div><div style="font-size:.8rem;font-weight:500">' + d.name + '</div>' +
+        '<div style="font-size:.63rem;color:var(--mt)">' + d.chunk_count + ' chunks · ' + t + '</div></div></div>' +
+        '<button class="btn-del" onclick="delDoc(\'' + d.id + '\',\'' + d.name + '\')">Remove</button>' +
+        '</div>';
+    }).join('');
+  }).catch(function(){ el('kb-list').innerHTML = '<div class="empty">Error loading documents</div>'; });
+}
+
+function uploadKB(input) {
+  var file = input.files[0]; if (!file) return;
+  var prog = el('kb-progress');
+  prog.classList.add('on');
+  el('kb-prog-txt').textContent = 'Uploading "' + file.name + '"...';
+  var fd = new FormData(); fd.append('file', file);
+  fetch('/api/kb/upload', { method: 'POST', body: fd })
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        el('kb-prog-txt').textContent = '"' + data.name + '" uploaded (' + data.chunks + ' chunks). Embedding...';
+        setTimeout(function(){ prog.classList.remove('on'); loadKB(); }, 3000);
+      } else {
+        el('kb-prog-txt').textContent = 'Error: ' + data.error;
+        setTimeout(function(){ prog.classList.remove('on'); }, 4000);
+      }
+    }).catch(function(e){
+      el('kb-prog-txt').textContent = 'Upload failed';
+      setTimeout(function(){ prog.classList.remove('on'); }, 3000);
+    });
+  input.value = '';
+}
+
+function delDoc(id, name) {
+  if (!confirm('Remove "' + name + '" from knowledge base?')) return;
+  api('/api/kb/documents/' + id, { method: 'DELETE' })
+    .then(function(){ toast(name + ' removed'); loadKB(); })
+    .catch(function(){ toast('Error removing document'); });
+}
+
+// ── Recordings ─────────────────────────────────────────────────────────────────
+function loadRecs() {
+  api('/api/recordings').then(function(recs) {
+    el('rec-n').textContent = recs ? recs.length : 0;
+    if (!recs || !recs.length) {
+      el('rec-list').innerHTML = '<div class="empty">No recordings yet</div>';
+      return;
+    }
+    el('rec-list').innerHTML = recs.map(function(r) {
+      var t = new Date(r.recorded_at).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      var dur = r.duration_seconds ? Math.floor(r.duration_seconds/60)+'m '+r.duration_seconds%60+'s' : '—';
+      return '<div class="reci">' +
+        '<div style="flex:1">' +
+        '<div style="font-size:.8rem;font-weight:500">' + (r.customer_name||'Customer') + '</div>' +
+        '<div style="font-size:.63rem;color:var(--mt)">' + (r.agent_name||'Agent') + ' · ' + dur + ' · ' + t + '</div></div>' +
+        '<a href="' + r.cloud_url + '" target="_blank" style="padding:.28rem .7rem;background:var(--acb);color:var(--ac);border:1px solid var(--acbr);border-radius:100px;font-size:.68rem;text-decoration:none;white-space:nowrap">▶ Play</a>' +
+        '</div>';
+    }).join('');
+  }).catch(function(){ el('rec-list').innerHTML = '<div class="empty">Error loading recordings</div>'; });
+}
+
+// ── Supervisor WebRTC ─────────────────────────────────────────────────────────
+function startSupCall(customerId, customerName) {
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+    supStream = stream;
+    supPc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+    stream.getTracks().forEach(function(t){ supPc.addTrack(t, stream); });
+    supPc.ontrack = function(e){ el('sup-audio').srcObject = e.streams[0]; };
+    supPc.onicecandidate = function(e){ if (e.candidate) socket.emit('webrtc-ice', { to: customerId, candidate: e.candidate }); };
+    el('sup-call-nm').textContent = customerName;
+    el('sup-call').style.display = 'block';
+  }).catch(function(){ toast('Microphone required for calls'); });
+}
+
+function endSupCall() {
+  if (supPc) { supPc.close(); supPc = null; }
+  if (supStream) { supStream.getTracks().forEach(function(t){ t.stop(); }); supStream = null; }
+  el('sup-audio').srcObject = null;
+  el('sup-call').style.display = 'none';
+}
+
+// ── Socket ─────────────────────────────────────────────────────────────────────
+var socket = io();
+
+socket.on('connect', function() {
+  console.log('[Supervisor] Socket connected');
+  socket.emit('supervisor-join', { token: '' });
+});
+
+socket.on('live-state', function(state) {
+  liveAgents = state.agents || [];
+  liveQueue = state.queue || [];
+  liveCalls = state.activeCalls || [];
+  renderLive();
+});
+
+socket.on('agent-list-updated', function(agents) {
+  liveAgents = agents || [];
+  renderLive();
+});
+
+socket.on('queue-updated', function(queue) {
+  liveQueue = queue || [];
+  renderLive();
+});
+
+socket.on('today-overview', function(today) {
+  if (!today) return;
+  el('k-calls').textContent = today.total_calls || 0;
+  el('k-avg').textContent = fmtDur(Math.round(today.avg_duration || 0));
+  el('k-rating').textContent = today.avg_rating > 0 ? Number(today.avg_rating).toFixed(1) : '—';
+});
+
+socket.on('escalation-incoming', function(esc) {
+  pendingEsc.push({ escalationId: esc.escalationId, callId: esc.callId, agentName: esc.agentName, customerName: esc.customerName, customerId: esc.customerId, reason: esc.reason });
+  renderEsc();
+  toast('Escalation from ' + esc.agentName + ': ' + esc.customerName);
+  if (Notification.permission === 'granted') {
+    new Notification('Escalation', { body: esc.agentName + ' escalated call with ' + esc.customerName });
+  }
+});
+
+socket.on('call-started', function(data) {
+  startSupCall(data.customerId, data.customerName);
+});
+
+socket.on('webrtc-offer', function(data) {
+  if (!supPc) return;
+  supPc.setRemoteDescription(new RTCSessionDescription(data.offer)).then(function() {
+    return supPc.createAnswer();
+  }).then(function(ans) {
+    return supPc.setLocalDescription(ans).then(function(){ return ans; });
+  }).then(function(ans) {
+    socket.emit('webrtc-answer', { to: data.from, answer: ans });
+  });
+});
+
+socket.on('webrtc-answer', function(data) {
+  if (supPc) supPc.setRemoteDescription(new RTCSessionDescription(data.answer));
+});
+
+socket.on('webrtc-ice', function(data) {
+  if (supPc) supPc.addIceCandidate(new RTCIceCandidate(data.candidate));
+});
+
+socket.on('call-ended', function() { endSupCall(); });
+
+// ── Boot ───────────────────────────────────────────────────────────────────────
+if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+loadKPIs();
+setInterval(loadKPIs, 30000);
+setInterval(renderLive, 5000);
+</script>
+</body>
+</html>
